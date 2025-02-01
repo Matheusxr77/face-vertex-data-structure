@@ -1,3 +1,8 @@
+# Importando bibliotecas
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Função principal
 def main():
     # Solicita ao usuário o nome do arquivo OFF (sem extensão)
     filename = input('Arquivo OFF: ')
@@ -18,10 +23,11 @@ def main():
     print(f"Número de Faces: {num_f}\n")
 
     # Lê os vértices
-    vertices = [linhas.pop(0) for _ in range(num_v)]
+    vertices = [list(map(float, linhas.pop(0).split())) for _ in range(num_v)]
+    vertices = np.array(vertices)
 
     # Lê as faces
-    faces = [linhas.pop(0) for _ in range(num_f)]
+    faces = [list(map(int, linhas.pop(0).split()[1:])) for _ in range(num_f)]
 
     # Inicializa as tabelas
     verticesTable = ""
@@ -31,25 +37,18 @@ def main():
     for x in range(len(vertices)):
         facesVT = []
         for j in range(len(faces)):
-            face_data = faces[j].split()
-            face_type = int(face_data[0])  # Número de vértices na face
-            vertex_indices = face_data[1:]  # Índices dos vértices
-
-            # Verifica se o vértice faz parte da face
-            if str(x) in vertex_indices:
+            if x in faces[j]:
                 facesVT.append(f"F{j}")
 
         # Adiciona os dados do vértice à tabela
         if facesVT:
-            verticesTable += f"('V{x}:', [{vertices[x]}], {facesVT})\n"
+            verticesTable += f"('V{x}:', {vertices[x].tolist()}, {facesVT})\n"
         else:
-            verticesTable += f"('V{x}:', [{vertices[x]}])\n"
+            verticesTable += f"('V{x}:', {vertices[x].tolist()})\n"
 
     # Monta a tabela de faces com a verificação de formato
     for i, face in enumerate(faces):
-        face_data = face.split()
-        num_vertices = int(face_data[0])  # Primeiro número indica quantos vértices a face possui
-        vertex_indices = face_data[1:]  # Índices dos vértices
+        num_vertices = len(face)
 
         # Verifica se a face é triangular ou quadrilátera
         if num_vertices not in {3, 4}:
@@ -57,7 +56,7 @@ def main():
             return
 
         # Converte índices para formato "Vx"
-        faceVT = ", ".join(f"V{v}" for v in vertex_indices)
+        faceVT = ", ".join(f"V{v}" for v in face)
         facesTable += f"('F{i}', [{faceVT}])\n"
 
     # Exibe as tabelas
@@ -67,6 +66,18 @@ def main():
     print('TABELA DE FACES')
     print(facesTable)
 
+    # Plotando a malha
+    fig, ax = plt.subplots()
+    for face in faces:
+        polygon = vertices[face]
+        polygon = np.vstack([polygon, polygon[0]])  # Fechando a forma
+        ax.plot(polygon[:, 0], polygon[:, 1], 'k-')
 
+    # Plotando os vértices
+    ax.scatter(vertices[:, 0], vertices[:, 1], color='red')
+    ax.set_title("Visualização da Malha")
+    plt.show()
+
+# Executa a função principal
 if __name__ == '__main__':
     main()
